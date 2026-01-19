@@ -3,6 +3,10 @@
         {
             "source": "/api/:path*",
             "destination": "/api/:path*"
+        },
+        {
+            "source": "/((?!api/.*).*)",
+            "destination": "/index.html"
         }
     ],
     "functions": {
@@ -33,15 +37,5 @@
                 }
             ]
         }
-    ],
-    "build": {
-        "env": {
-            "SUPABASE_URL": "@supabase-url",
-            "SUPABASE_ANON_KEY": "@supabase-anon-key",
-            "SUPABASE_SERVICE_ROLE_KEY": "@supabase-service-role-key",
-            "GEMINI_API_KEY": "@gemini-api-key",
-            "STRIPE_SECRET_KEY": "@stripe-secret-key",
-            "STRIPE_WEBHOOK_SECRET": "@stripe-webhook-secret"
-        }
-    }
+    ]
 }
