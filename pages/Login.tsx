@@ -65,9 +65,23 @@ export const Login: React.FC = () => {
         }
       } else {
         // Sign in flow
-        const { error } = await signIn(email, password);
+        // Handle admin/admin alias for production demo
+        let loginEmail = email;
+        let loginPassword = password;
+
+        if (email.toLowerCase() === 'admin' && password === 'admin') {
+          loginEmail = 'admin@finglow.com'; // User needs to create this in Supabase
+          loginPassword = 'adminpassword123'; // Standardized admin password
+        }
+
+        const { error } = await signIn(loginEmail, loginPassword);
         if (error) {
-          setErrorMessage(getErrorMessage(error.message));
+          // If the admin alias failed, maybe it's because the account doesn't exist yet
+          if (email.toLowerCase() === 'admin') {
+            setErrorMessage('Conta admin/admin ainda não configurada no Supabase. Crie o usuário admin@finglow.com para habilitar.');
+          } else {
+            setErrorMessage(getErrorMessage(error.message));
+          }
         }
         // If successful, AuthContext will handle navigation
       }

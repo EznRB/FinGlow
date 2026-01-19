@@ -24,7 +24,10 @@ export const AnamnesisModal: React.FC<AnamnesisModalProps> = ({ isOpen, onComple
 
   useEffect(() => {
     if (initialData) {
-      setFormData(initialData);
+      setFormData(prev => ({
+        ...prev,
+        ...initialData
+      }));
     }
   }, [initialData]);
 
