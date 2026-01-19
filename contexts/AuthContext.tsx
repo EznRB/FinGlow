@@ -12,7 +12,7 @@ interface AuthContextType {
   profile: Profile | null;
   loading: boolean;
   error: AuthError | null;
-  
+
   // Auth methods
   signIn: (email: string, password: string) => Promise<{ error: AuthError | null }>;
   signUp: (email: string, password: string, name?: string) => Promise<{ error: AuthError | null }>;
@@ -20,7 +20,7 @@ interface AuthContextType {
   signInWithGoogle: () => Promise<{ error: AuthError | null }>;
   resetPassword: (email: string) => Promise<{ error: AuthError | null }>;
   updatePassword: (newPassword: string) => Promise<{ error: AuthError | null }>;
-  
+
   // Profile methods
   refreshProfile: () => Promise<void>;
   updateProfile: (data: Partial<Profile>) => Promise<{ error: Error | null }>;
@@ -39,13 +39,36 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<AuthError | null>(null);
 
-  // Fetch user profile from database
-  const fetchProfile = useCallback(async (userId: string) => {
+  // Fetch or create user profile
+  const fetchProfile = useCallback(async (user: User) => {
     try {
-      const profileData = await getProfile(userId);
+      let profileData = await getProfile(user.id);
+
+      // If no profile exists (common for Google signups), create one
+      if (!profileData) {
+        console.log('No profile found, creating one...');
+        const { data: newProfile, error } = await supabase
+          .from('profiles')
+          .insert({
+            id: user.id,
+            email: user.email,
+            name: user.user_metadata?.full_name || user.user_metadata?.name || 'User',
+            avatar_url: user.user_metadata?.avatar_url || null,
+            credits: 1 // Gift 1 credit for new signups
+          })
+          .select()
+          .single();
+
+        if (!error) {
+          profileData = newProfile;
+        } else {
+          console.error('Error creating profile:', error);
+        }
+      }
+
       setProfile(profileData);
     } catch (err) {
-      console.error('Error fetching profile:', err);
+      console.error('Error fetching/creating profile:', err);
     }
   }, []);
 
@@ -64,7 +87,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       try {
         // Get current session
         const { data: { session: currentSession }, error: sessionError } = await supabase.auth.getSession();
-        
+
         if (sessionError) {
           console.error('Session error:', sessionError);
           setError(sessionError);
@@ -73,11 +96,11 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         if (mounted) {
           setSession(currentSession);
           setUser(currentSession?.user ?? null);
-          
+
           if (currentSession?.user) {
             await fetchProfile(currentSession.user.id);
           }
-          
+
           setLoading(false);
         }
       } catch (err) {
@@ -93,18 +116,18 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, newSession) => {
       console.log('Auth state changed:', event);
-      
+
       if (mounted) {
         setSession(newSession);
         setUser(newSession?.user ?? null);
-        
+
         if (newSession?.user) {
           // Small delay to allow trigger to create profile
           setTimeout(() => fetchProfile(newSession.user.id), 500);
         } else {
           setProfile(null);
         }
-        
+
         setLoading(false);
       }
     });

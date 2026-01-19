@@ -24,6 +24,14 @@ export const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
   const [timeRange, setTimeRange] = useState<'30d' | '3m' | '1y'>('30d');
 
   useEffect(() => {
+    // Check for payment success
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('payment') === 'success') {
+      refreshProfile();
+      // Remove the param from URL without reloading
+      window.history.replaceState({}, '', window.location.pathname);
+    }
+
     // Load ONLY real report from local storage
     const storedReport = localStorage.getItem('finglow_latest_report');
     if (storedReport) {

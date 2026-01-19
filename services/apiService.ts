@@ -136,7 +136,7 @@ export async function redirectToCheckout(packageType: PackageType): Promise<void
     throw new Error(response.error || 'Failed to create checkout session');
   }
 
-  // Redirect to Stripe Checkout
+  // Redirect to AbacatePay Checkout
   window.location.href = response.checkout_url;
 }
 

@@ -88,19 +88,21 @@ export const AnamnesisModal: React.FC<AnamnesisModalProps> = ({ isOpen, onComple
               <motion.div
                 initial={{ opacity: 0, y: -10 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="mb-6 p-4 bg-emerald-500/10 border border-emerald-500/20 rounded-xl flex items-center justify-between"
+                className="mb-6 p-4 bg-emerald-500/10 border border-emerald-500/20 rounded-xl flex items-center justify-between group hover:bg-emerald-500/20 transition-all cursor-pointer"
+                onClick={() => onComplete(formData)}
               >
                 <div className="text-sm text-emerald-300">
-                  <span className="block font-bold mb-1">{t.anamnesis.savedProfileFound}</span>
-                  <span className="opacity-80">{initialData.occupation}, {initialData.age}y</span>
+                  <span className="block font-bold mb-1 flex items-center gap-1">
+                    <Zap className="w-3 h-3 fill-emerald-500" /> {t.anamnesis.savedProfileFound}
+                  </span>
+                  <span className="opacity-80">{initialData.occupation}, {initialData.age} anos</span>
                 </div>
                 <Button
                   variant="primary"
                   size="sm"
-                  onClick={() => onComplete(formData)}
-                  className="flex-shrink-0"
+                  className="flex-shrink-0 shadow-lg shadow-emerald-500/20"
                 >
-                  <RotateCcw className="w-3 h-3 mr-2" />
+                  <ArrowRight className="w-3 h-3 mr-2" />
                   {t.anamnesis.useSaved}
                 </Button>
               </motion.div>

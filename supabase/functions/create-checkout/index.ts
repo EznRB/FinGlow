@@ -1,35 +1,45 @@
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
-import type { CreateCheckoutRequest, CreateCheckoutResponse } from '../types/index.ts';
 
-const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
-const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
-const mercadoPagoAccessToken = Deno.env.get('MERCADO_PAGO_ACCESS_TOKEN')!;
-
-const supabase = createClient(supabaseUrl, supabaseServiceKey);
+const corsHeaders = {
+    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+};
 
 const PACKAGES = {
-    single: { credits: 1, amount: 9.90 },
-    pack5: { credits: 5, amount: 39.90 },
-    pack10: { credits: 10, amount: 69.90 }
+    single: { credits: 1, amount: 9.90, name: '1 Crédito' },
+    pack5: { credits: 5, amount: 39.90, name: '5 Créditos' },
+    pack10: { credits: 10, amount: 69.90, name: '10 Créditos' }
 };
 
 serve(async (req: Request) => {
+    if (req.method === 'OPTIONS') {
+        return new Response('ok', { headers: corsHeaders });
+    }
+
     if (req.method !== 'POST') {
         return new Response(JSON.stringify({ error: 'Method not allowed' }), {
             status: 405,
-            headers: { 'Content-Type': 'application/json' }
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' }
         });
     }
 
     try {
-        const { user_id, package_type }: CreateCheckoutRequest = await req.json();
+        const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+        const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+        const abacatepayApiKey = Deno.env.get('ABACATEPAY_API_KEY')!;
 
+        if (!supabaseUrl || !supabaseServiceKey || !abacatepayApiKey) {
+            throw new Error('Missing environment variables');
+        }
+
+        const supabase = createClient(supabaseUrl, supabaseServiceKey);
+
+        // 1. Authenticate
         const authHeader = req.headers.get('Authorization');
         if (!authHeader) {
             return new Response(JSON.stringify({ error: 'Unauthorized' }), {
-                status: 401,
-                headers: { 'Content-Type': 'application/json' }
+                status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' }
             });
         }
 
@@ -38,105 +48,99 @@ serve(async (req: Request) => {
 
         if (authError || !user) {
             return new Response(JSON.stringify({ error: 'Invalid token' }), {
-                status: 401,
-                headers: { 'Content-Type': 'application/json' }
+                status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' }
             });
         }
 
-        if (user.id !== user_id) {
-            return new Response(JSON.stringify({ error: 'User ID mismatch' }), {
-                status: 403,
-                headers: { 'Content-Type': 'application/json' }
-            });
-        }
+        // 2. Parse Body
+        const { package_type, success_url } = await req.json();
+        const selectedPackage = PACKAGES[package_type as keyof typeof PACKAGES];
 
-        const selectedPackage = PACKAGES[package_type];
         if (!selectedPackage) {
             return new Response(JSON.stringify({ error: 'Invalid package type' }), {
-                status: 400,
-                headers: { 'Content-Type': 'application/json' }
+                status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' }
             });
         }
 
-        const preferenceResponse = await fetch('https://api.mercadopago.com/checkout/preferences', {
+        // 3. Create AbacatePay Billing
+        const origin = req.headers.get('origin') || 'https://finglow-ai.vercel.app';
+        const finalSuccessUrl = success_url || `${origin}/#/dashboard?payment=success`;
+
+        const billingPayload = {
+            frequency: "ONE_TIME",
+            methods: ["PIX", "CREDIT_CARD"],
+            products: [
+                {
+                    externalId: package_type,
+                    name: `FinGlow - ${selectedPackage.name}`,
+                    quantity: 1,
+                    price: Math.round(selectedPackage.amount * 100), // in cents
+                    description: `Pacote com ${selectedPackage.credits} crédito${selectedPackage.credits > 1 ? 's' : ''} para análise de IA`
+                }
+            ],
+            returnUrl: finalSuccessUrl,
+            completionUrl: finalSuccessUrl,
+            customer: {
+                email: user.email,
+            }
+        };
+
+        const abacateResponse = await fetch('https://api.abacatepay.com/v1/billing/create', {
             method: 'POST',
             headers: {
-                'Authorization': `Bearer ${mercadoPagoAccessToken}`,
+                'Authorization': `Bearer ${abacatepayApiKey}`,
                 'Content-Type': 'application/json'
             },
-            body: JSON.stringify({
-                items: [{
-                    title: `${selectedPackage.credits} Credits - FinGlow`,
-                    quantity: 1,
-                    currency_id: 'BRL',
-                    unit_price: selectedPackage.amount
-                }],
-                back_urls: {
-                    success: `${req.headers.get('origin')}/payment/success`,
-                    failure: `${req.headers.get('origin')}/payment/failure`,
-                    pending: `${req.headers.get('origin')}/payment/pending`
-                },
-                auto_return: 'approved',
-                external_reference: user_id,
-                metadata: {
-                    user_id,
-                    package_type,
-                    credits: selectedPackage.credits
-                }
-            })
+            body: JSON.stringify(billingPayload)
         });
 
-        if (!preferenceResponse.ok) {
-            const errorText = await preferenceResponse.text();
-            console.error('Mercado Pago API error:', errorText);
-            return new Response(JSON.stringify({ error: 'Failed to create checkout' }), {
-                status: 500,
-                headers: { 'Content-Type': 'application/json' }
-            });
+        const abacateData = await abacateResponse.json();
+
+        if (!abacateResponse.ok) {
+            console.error('AbacatePay error:', abacateData);
+            throw new Error(abacateData.message || 'Failed to create billing');
         }
 
-        const preferenceData = await preferenceResponse.json();
+        const { url: checkoutUrl, id: billingId } = abacateData.data;
 
-        const { data: transaction, error: transactionError } = await supabase
+        // 4. Save Transaction
+        const { data: transaction, error: txError } = await supabase
             .from('transactions')
             .insert({
-                user_id,
+                user_id: user.id,
                 amount: selectedPackage.amount,
+                credits: selectedPackage.credits,
+                package_type,
                 status: 'pending',
-                provider_id: preferenceData.id,
-                package_type
+                provider: 'abacatepay',
+                provider_session_id: billingId
             })
             .select()
             .single();
 
-        if (transactionError) {
-            console.error('Failed to create transaction:', transactionError);
-            return new Response(JSON.stringify({ error: 'Failed to create transaction' }), {
-                status: 500,
-                headers: { 'Content-Type': 'application/json' }
-            });
+        if (txError) {
+            console.error('Database error:', txError);
+            throw new Error('Failed to save transaction');
         }
 
-        const responseBody: CreateCheckoutResponse = {
+        return new Response(JSON.stringify({
             success: true,
-            checkout_url: preferenceData.init_point,
+            checkout_url: checkoutUrl,
+            session_id: billingId,
             transaction_id: transaction.id
-        };
-
-        return new Response(JSON.stringify(responseBody), {
+        }), {
             status: 200,
-            headers: { 'Content-Type': 'application/json' }
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' }
         });
 
-    } catch (error) {
-        console.error('Error in create-checkout:', error);
+    } catch (error: any) {
+        console.error('Create checkout error:', error);
         return new Response(JSON.stringify({
             success: false,
-            error: 'Internal server error',
-            message: error.message
+            error: error.message || 'Internal server error'
         }), {
             status: 500,
-            headers: { 'Content-Type': 'application/json' }
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' }
         });
     }
 });

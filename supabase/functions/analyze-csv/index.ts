@@ -91,6 +91,13 @@ function validateCSVStructure(data: any[]): { valid: boolean; errors: string[] }
 function buildAnalysisPrompt(data: any[], anamnesis?: any): string {
     const groundingVolume = data.reduce((sum, row) => sum + Math.abs(Number(row.amount) || 0), 0);
 
+    // Minimize data sent to AI to reduce tokens and speed up
+    const minimalData = data.map(tx => ({
+        d: tx.date,
+        a: tx.amount,
+        de: tx.description
+    }));
+
     let profileSection = '';
     if (anamnesis) {
         const familyStatusMap: Record<string, string> = {
@@ -102,75 +109,56 @@ function buildAnalysisPrompt(data: any[], anamnesis?: any): string {
 
         const status = familyStatusMap[anamnesis.familyStatus] || anamnesis.familyStatus;
         profileSection = `
-    USER PROFILE (ANAMNESIS):
+    USER PROFILE:
     - Age: ${anamnesis.age}
     - Occupation: ${anamnesis.occupation}
     - Family Status: ${status}
-    - Declared Investments: R$ ${anamnesis.totalInvested}
-    - Primary Goals: ${anamnesis.financialGoals?.join(', ') || 'N/A'}
+    - Investments: R$ ${anamnesis.totalInvested}
+    - Goals: ${anamnesis.financialGoals?.join(', ') || 'N/A'}
     `;
     }
 
-    return `You are an expert Personal CFO and Data Scientist specializing in the Brazilian financial market.
-Analyze the following CSV transaction data to generate a comprehensive financial health report.
-
+    return `You are an expert Personal CFO and Data Scientist specializing in the Brazilian financial market. 
+Analyze the transaction data to generate a deep, comprehensive financial health report.
 ${profileSection}
 
-CRITICAL INSTRUCTION ON LANGUAGE AND CURRENCY:
-1. **Detect Language:** Check the transaction descriptions.
-2. **Currency Context:** 
-   - If descriptions are Portuguese or involve BRL, **ASSUME BRAZILIAN REAL (BRL)**.
-   - **DO NOT convert to USD.** Keep numeric values raw.
-   - Use "R$" in text output.
+CONTEXT:
+- Currency: BRL (R$). Raw values are in BRL.
+- Grounding Sum: ${Math.round(groundingVolume)}.
 
-*** IMPORTANT MATH GROUNDING ***
-The sum of absolute values in the provided data is approximately **${Math.round(groundingVolume)}**.
-- Your calculated (Total Income + Total Expenses) should be in the magnitude of **${Math.round(groundingVolume)}**.
-- Do not divide values by any exchange rate. Treat the input numbers as the final currency units.
-
-IMPORTANT: You must respond with a valid JSON object only, no markdown formatting, no extra text.
-
-JSON structure must be exactly:
+REQUIRED JSON STRUCTURE (Valid JSON ONLY):
 {
   "financial_health_score": number (0-100),
   "metrics": {
     "total_income": number,
     "total_expense": number,
-    "savings_rate_percentage": number (0-100),
-    "discretionary_spending_percentage": number (0-100),
+    "savings_rate_percentage": number,
+    "discretionary_spending_percentage": number,
     "runway_days_estimate": number
   },
-  "breakdown_50_30_20": {
-    "needs": number,
-    "wants": number,
-    "savings": number
-  },
-  "subscriptions": [
-    { "name": string, "cost": number, "frequency": "monthly" | "yearly" }
-  ],
-  "categories": [
-    { "name": string, "value": number }
-  ],
-  "daily_burn_rate": [
-    { "date": string (YYYY-MM-DD), "amount": number, "cumulative": number }
-  ],
+  "breakdown_50_30_20": { "needs": number, "wants": number, "savings": number },
+  "subscriptions": [ { "name": string, "cost": number, "frequency": "monthly" } ],
+  "categories": [ { "name": string, "value": number } ],
+  "daily_burn_rate": [ { "date": "YYYY-MM-DD", "amount": number, "cumulative": number } ],
   "insights": {
-    "advice_text": string (comprehensive advice, 3-4 paragraphs in Portuguese),
-    "wasteful_expenses": string[] (specific items with amounts),
+    "advice_text": "Portuguese text (3-4 detailed paragraphs with professional financial advice, specific to the Brazilian context)",
+    "wasteful_expenses": ["item (amount)"],
     "largest_category": string,
     "anomaly_detected": string | null,
-    "immediate_actions": [
-      { "title": string, "description": string, "type": "danger" | "warning" | "success" }
-    ],
-    "market_comparison": string (optional)
+    "immediate_actions": [ { "title": string, "description": string, "type": "danger" | "warning" | "success" } ]
   },
   "transactions": [
     { "id": string, "description": string, "category": string, "date": string, "amount": number }
   ]
 }
 
-Financial data to analyze (${data.length} transactions, showing first 400 for context):
-${JSON.stringify(data.slice(0, 400), null, 2)}`;
+CRITICAL RULES:
+1. Respond ONLY with the JSON.
+2. Provide HIGH-QUALITY, deep analysis. Do not be shallow.
+3. In the "transactions" field, include ONLY the top 50 most relevant or recent transactions for visualization.
+
+INPUT DATA (${data.length} transactions, mapped d=date, a=amount, de=description):
+${JSON.stringify(minimalData.slice(0, 500))}`;
 }
 
 // Helper for retry logic
