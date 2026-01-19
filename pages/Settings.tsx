@@ -149,6 +149,15 @@ export const Settings: React.FC<SettingsProps> = ({ onLogout }) => {
                   >
                      <CreditCard className="w-4 h-4 mr-3" /> {t.settings.tabs.credits}
                   </button>
+
+                  <div className="pt-4 mt-4 border-t border-slate-800 lg:hidden">
+                     <button
+                        onClick={onLogout}
+                        className="w-full flex items-center p-3 rounded-lg text-sm font-medium text-rose-400 hover:bg-rose-500/10 transition-all border border-transparent hover:border-rose-500/20"
+                     >
+                        <Shield className="w-4 h-4 mr-3" /> {t.sidebar.signOut}
+                     </button>
+                  </div>
                </div>
 
                {/* Content Area */}
@@ -321,8 +330,8 @@ export const Settings: React.FC<SettingsProps> = ({ onLogout }) => {
                                              <td className="py-4 text-sm font-medium text-white">+ {tx.credits} Credits (R${tx.amount.toFixed(2)})</td>
                                              <td className="py-4">
                                                 <span className={`text-xs px-2 py-1 rounded border ${tx.status === 'completed'
-                                                      ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
-                                                      : 'bg-amber-500/10 text-amber-400 border-amber-500/20'
+                                                   ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
+                                                   : 'bg-amber-500/10 text-amber-400 border-amber-500/20'
                                                    }`}>
                                                    {tx.status}
                                                 </span>
