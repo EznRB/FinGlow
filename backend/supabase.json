@@ -1,0 +1,14 @@
+{
+  "projectId": "your-project-id",
+  "functions": {
+    "analyze-csv": {
+      "verifyJWT": true
+    },
+    "create-checkout": {
+      "verifyJWT": true
+    },
+    "webhook-handler": {
+      "verifyJWT": false
+    }
+  }
+}
