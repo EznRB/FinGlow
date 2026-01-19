@@ -1,13 +1,13 @@
 import { GoogleGenerativeAI } from '@google/generative-ai';
-import { AnalyzeCSVRequest, AnalyzeCSVResponse, AIAnalysisResult, AnamnesisData } from '../types';
+import { AnalyzeCSVRequest, AnalyzeCSVResponse, AIAnalysisResult, AnamnesisData } from './_types';
 import {
     verifyToken,
     getProfileCredits,
     deductCredit,
     saveReport,
     logAudit
-} from '../lib/supabase';
-import { sanitizeFinancialData, validateCSVStructure, normalizeCSVData } from '../lib/sanitizer';
+} from './_lib/supabase';
+import { sanitizeFinancialData, validateCSVStructure, normalizeCSVData } from './_lib/sanitizer';
 
 // ============================================================================
 // Configuration

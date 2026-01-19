@@ -1,5 +1,5 @@
-import { CreateCheckoutRequest, CreateCheckoutResponse, PACKAGES } from '../types';
-import { verifyToken, createTransaction, logAudit } from '../lib/supabase';
+import { CreateCheckoutRequest, CreateCheckoutResponse, PACKAGES } from './_types';
+import { verifyToken, createTransaction, logAudit } from './_lib/supabase';
 
 // ============================================================================
 // Configuration

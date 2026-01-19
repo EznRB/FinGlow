@@ -4,8 +4,8 @@ import {
     completeTransaction,
     addCredits,
     logAudit
-} from '../lib/supabase';
-import { PACKAGES, PackageType } from '../types';
+} from './_lib/supabase';
+import { PACKAGES, PackageType } from './_types';
 
 // CORS headers
 const headers = {
