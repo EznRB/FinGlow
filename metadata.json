@@ -1,0 +1,5 @@
+{
+  "name": "FinGlow - AI Financial Auditor",
+  "description": "An advanced AI-powered financial health auditor that analyzes CSV bank statements to calculate health scores, detect subscriptions, and provide deep analytics using Gemini 3 Flash.",
+  "requestFramePermissions": []
+}
