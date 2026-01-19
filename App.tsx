@@ -1,5 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { HashRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { AuthProvider, useAuth, ProtectedRoute } from './contexts/AuthContext';
+import { LanguageProvider } from './contexts/LanguageContext';
 import { Login } from './pages/Login';
 import { Dashboard } from './pages/Dashboard';
 import { UploadPage } from './pages/UploadPage';
@@ -9,73 +11,112 @@ import { Settings } from './pages/Settings';
 import { NotFound } from './pages/NotFound';
 import { TopBar } from './components/ui/TopBar';
 
-export default function App() {
-  // Simple Mock Auth State
-  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
+// ============================================================================
+// App Routes Component (uses auth context)
+// ============================================================================
 
-  useEffect(() => {
-    const storedAuth = localStorage.getItem('finglow_auth');
-    if (storedAuth === 'true') {
-      setIsAuthenticated(true);
-    }
-  }, []);
+const AppRoutes: React.FC = () => {
+  const { user, loading, signOut } = useAuth();
 
-  const handleLogin = () => {
-    localStorage.setItem('finglow_auth', 'true');
-    setIsAuthenticated(true);
-  };
+  // Show loading screen while checking auth
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-slate-950">
+        <div className="flex flex-col items-center gap-4">
+          <div className="w-16 h-16 border-4 border-emerald-500 border-t-transparent rounded-full animate-spin" />
+          <p className="text-slate-400 text-lg">Carregando FinGlow...</p>
+        </div>
+      </div>
+    );
+  }
 
-  const handleLogout = () => {
-    localStorage.removeItem('finglow_auth');
-    setIsAuthenticated(false);
+  const handleLogout = async () => {
+    await signOut();
   };
 
   return (
-    <HashRouter>
+    <>
       <TopBar />
       <Routes>
-        <Route 
-          path="/login" 
+        {/* Public route - Login */}
+        <Route
+          path="/login"
           element={
-            !isAuthenticated ? <Login onLogin={handleLogin} /> : <Navigate to="/dashboard" replace />
-          } 
+            !user ? <Login /> : <Navigate to="/dashboard" replace />
+          }
         />
-        <Route 
-          path="/dashboard" 
+
+        {/* Protected routes */}
+        <Route
+          path="/dashboard"
           element={
-            isAuthenticated ? <Dashboard onLogout={handleLogout} /> : <Navigate to="/login" replace />
-          } 
+            <ProtectedRoute fallback={<Navigate to="/login" replace />}>
+              <Dashboard onLogout={handleLogout} />
+            </ProtectedRoute>
+          }
         />
-        <Route 
-          path="/upload" 
+
+        <Route
+          path="/upload"
           element={
-            isAuthenticated ? <UploadPage onLogout={handleLogout} /> : <Navigate to="/login" replace />
-          } 
+            <ProtectedRoute fallback={<Navigate to="/login" replace />}>
+              <UploadPage onLogout={handleLogout} />
+            </ProtectedRoute>
+          }
         />
-        <Route 
-          path="/history" 
+
+        <Route
+          path="/history"
           element={
-            isAuthenticated ? <History onLogout={handleLogout} /> : <Navigate to="/login" replace />
-          } 
+            <ProtectedRoute fallback={<Navigate to="/login" replace />}>
+              <History onLogout={handleLogout} />
+            </ProtectedRoute>
+          }
         />
-        <Route 
-          path="/reports" 
+
+        <Route
+          path="/reports"
           element={
-            isAuthenticated ? <Reports onLogout={handleLogout} /> : <Navigate to="/login" replace />
-          } 
+            <ProtectedRoute fallback={<Navigate to="/login" replace />}>
+              <Reports onLogout={handleLogout} />
+            </ProtectedRoute>
+          }
         />
-        <Route 
-          path="/settings" 
+
+        <Route
+          path="/settings"
           element={
-             isAuthenticated ? <Settings onLogout={handleLogout} /> : <Navigate to="/login" replace />
-          } 
+            <ProtectedRoute fallback={<Navigate to="/login" replace />}>
+              <Settings onLogout={handleLogout} />
+            </ProtectedRoute>
+          }
         />
-        {/* Redirect root to dashboard if auth, else login */}
-        <Route path="/" element={<Navigate to={isAuthenticated ? "/dashboard" : "/login"} replace />} />
-        
+
+        {/* Redirect root to dashboard if authenticated, else login */}
+        <Route
+          path="/"
+          element={<Navigate to={user ? "/dashboard" : "/login"} replace />}
+        />
+
         {/* 404 Route */}
         <Route path="*" element={<NotFound />} />
       </Routes>
-    </HashRouter>
+    </>
+  );
+};
+
+// ============================================================================
+// Main App Component with Providers
+// ============================================================================
+
+export default function App() {
+  return (
+    <LanguageProvider>
+      <AuthProvider>
+        <HashRouter>
+          <AppRoutes />
+        </HashRouter>
+      </AuthProvider>
+    </LanguageProvider>
   );
 }
