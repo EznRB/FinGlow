@@ -133,6 +133,17 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             meta?.full_name || meta?.name,
             meta?.avatar_url
           );
+
+          // If this is a redirection from an email confirmation (type=signup)
+          // We can check the URL hash to redirect to our success page
+          const hash = window.location.hash;
+          if (hash.includes('type=signup') || hash.includes('type=recovery')) {
+            const target = hash.includes('type=signup') ? '/verify' : '/reset-password';
+            // Use setTimeout to allow the session to be fully processed before redirecting
+            setTimeout(() => {
+              window.location.hash = `#${target}`;
+            }, 100);
+          }
         } else {
           setProfile(null);
         }

@@ -229,6 +229,20 @@ export const translations = {
         invoice: "Invoice"
       }
     },
+    verifyEmail: {
+      title: 'Email Verified!',
+      message: 'Your email has been successfully confirmed. You can now access all features of FinGlow.',
+      backToDashboard: 'Go to Dashboard',
+      tagline: 'Ready to glow'
+    },
+    resetPassword: {
+      title: 'Reset Password',
+      message: 'Enter your new password below to regain access to your account.',
+      placeholder: 'New password',
+      confirmPlaceholder: 'Confirm new password',
+      button: 'Update Password',
+      success: 'Password updated successfully!'
+    },
     error404: {
       title: "404 - Page Not Found",
       message: "The path you are looking for does not exist. Let's get you back on track.",
@@ -499,6 +513,20 @@ export const translations = {
         status: "Status",
         invoice: "Fatura"
       }
+    },
+    verifyEmail: {
+      title: 'E-mail Confirmado!',
+      message: 'Seu e-mail foi confirmado com sucesso. Agora você tem acesso total ao FinGlow.',
+      backToDashboard: 'Ir para o Dashboard',
+      tagline: 'Pronto para brilhar'
+    },
+    resetPassword: {
+      title: 'Recuperar Senha',
+      message: 'Digite sua nova senha abaixo para recuperar o acesso à sua conta.',
+      placeholder: 'Nova senha',
+      confirmPlaceholder: 'Confirme a nova senha',
+      button: 'Atualizar Senha',
+      success: 'Senha atualizada com sucesso!'
     },
     error404: {
       title: "404 - Página não encontrada",
