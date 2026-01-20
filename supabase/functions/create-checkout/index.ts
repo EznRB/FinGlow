@@ -68,7 +68,7 @@ serve(async (req: Request) => {
 
         const billingPayload = {
             frequency: "ONE_TIME",
-            methods: ["PIX", "CREDIT_CARD"],
+            methods: ["PIX", "CARD"],
             products: [
                 {
                     externalId: package_type,
