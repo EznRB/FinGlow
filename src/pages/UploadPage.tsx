@@ -17,7 +17,7 @@ interface UploadPageProps {
 
 export const UploadPage: React.FC<UploadPageProps> = ({ onLogout }) => {
   const { t } = useLanguage();
-  const { profile, refreshProfile, updateAnamnesis } = useAuth();
+  const { profile, refreshProfile, updateAnamnesis, isAdmin } = useAuth();
 
   const [status, setStatus] = useState<AnalysisStatus>('idle');
   const [report, setReport] = useState<FinancialReportData | null>(null);
@@ -106,7 +106,7 @@ export const UploadPage: React.FC<UploadPageProps> = ({ onLogout }) => {
   };
 
   const handleFileUpload = async (file: File) => {
-    if (credits <= 0) {
+    if (!isAdmin && credits <= 0) {
       setIsCheckoutOpen(true);
       return;
     }

@@ -26,6 +26,7 @@ interface AuthContextType {
   refreshProfile: () => Promise<void>;
   updateProfile: (data: Partial<Profile>) => Promise<{ error: Error | null }>;
   updateAnamnesis: (data: AnamnesisData) => Promise<{ error: Error | null }>;
+  isAdmin: boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -189,6 +190,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         data: {
           full_name: name,
         },
+        emailRedirectTo: `${window.location.origin}/`,
       },
     });
 
@@ -302,6 +304,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     refreshProfile,
     updateProfile,
     updateAnamnesis,
+    isAdmin: profile?.role === 'admin'
   };
 
   return (

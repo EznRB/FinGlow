@@ -8,6 +8,7 @@ import { UploadPage } from './pages/UploadPage';
 import { History } from './pages/History';
 import { Reports } from './pages/Reports';
 import { Settings } from './pages/Settings';
+import { Admin } from './pages/Admin';
 import { VerifyEmail } from './pages/VerifyEmail';
 import { NotFound } from './pages/NotFound';
 import { TopBar } from './components/ui/TopBar';
@@ -89,6 +90,15 @@ const AppRoutes: React.FC = () => {
           element={
             <ProtectedRoute fallback={<Navigate to="/login" replace />}>
               <Settings onLogout={handleLogout} />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/admin"
+          element={
+            <ProtectedRoute fallback={<Navigate to="/login" replace />}>
+              <Admin onLogout={handleLogout} />
             </ProtectedRoute>
           }
         />

@@ -35,6 +35,7 @@ export interface Profile {
   name: string | null;
   avatar_url: string | null;
   credits: number;
+  role: 'user' | 'admin';
   anamnesis: AnamnesisData | null;
   created_at: string;
   updated_at: string;

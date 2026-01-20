@@ -10,7 +10,8 @@ import {
   PieChart,
   History as HistoryIcon,
   Plus,
-  Globe
+  Globe,
+  ShieldCheck
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { Link, useLocation } from 'react-router-dom';
@@ -27,7 +28,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ credits, onLogout, onAddCredit
   const [isCollapsed, setIsCollapsed] = useState(false);
   const location = useLocation();
   const { t, language, toggleLanguage } = useLanguage();
-  const { user, profile } = useAuth();
+  const { user, profile, isAdmin } = useAuth();
 
   const menuItems = [
     { icon: LayoutDashboard, label: t.sidebar.dashboard, path: '/dashboard' },
@@ -35,6 +36,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ credits, onLogout, onAddCredit
     { icon: HistoryIcon, label: t.sidebar.audits, path: '/history' },
     { icon: PieChart, label: t.sidebar.reports, path: '/reports' },
     { icon: Settings, label: t.sidebar.settings, path: '/settings' },
+    ...(isAdmin ? [{ icon: ShieldCheck, label: 'Admin', path: '/admin' }] : []),
   ];
 
   const isActive = (path: string) => location.pathname === path;
@@ -107,15 +109,17 @@ export const Sidebar: React.FC<SidebarProps> = ({ credits, onLogout, onAddCredit
             </div>
             <p className="text-xs text-slate-400 font-medium uppercase tracking-wider mb-1">{t.sidebar.credits}</p>
             <div className="flex items-end gap-1 mb-3">
-              <span className="text-2xl font-bold text-white">{credits}</span>
-              <span className="text-sm text-slate-500 mb-1">/ 10</span>
+              <span className="text-2xl font-bold text-white">{isAdmin ? '∞' : credits}</span>
+              {!isAdmin && <span className="text-sm text-slate-500 mb-1">/ 10</span>}
             </div>
-            <div className="w-full bg-slate-700 h-1.5 rounded-full overflow-hidden mb-3">
-              <div
-                className="bg-emerald-500 h-full rounded-full transition-all duration-500"
-                style={{ width: `${(credits / 10) * 100}%` }}
-              />
-            </div>
+            {!isAdmin && (
+              <div className="w-full bg-slate-700 h-1.5 rounded-full overflow-hidden mb-3">
+                <div
+                  className="bg-emerald-500 h-full rounded-full transition-all duration-500"
+                  style={{ width: `${(credits / 10) * 100}%` }}
+                />
+              </div>
+            )}
             <button
               onClick={onAddCredits}
               className="w-full py-1.5 bg-emerald-500 hover:bg-emerald-600 text-white text-xs font-bold rounded-lg transition-colors flex items-center justify-center"
@@ -127,7 +131,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ credits, onLogout, onAddCredit
       ) : (
         <div className="p-4 pt-0 flex flex-col items-center gap-2">
           <div className="w-10 h-10 rounded-full bg-slate-900 border border-slate-700 flex items-center justify-center text-emerald-400 font-bold text-sm">
-            {credits}
+            {isAdmin ? '∞' : credits}
           </div>
           <button
             onClick={onAddCredits}

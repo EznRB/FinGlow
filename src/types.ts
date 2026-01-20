@@ -2,6 +2,7 @@ export interface UserProfile {
   id: string;
   email: string;
   credits: number;
+  role?: 'user' | 'admin';
   name: string;
   avatar_url?: string | null;
   anamnesis?: AnamnesisData | null;
