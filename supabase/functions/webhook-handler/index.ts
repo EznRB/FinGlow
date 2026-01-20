@@ -11,10 +11,15 @@ serve(async (req: Request) => {
         return new Response('ok', { headers: corsHeaders });
     }
 
-    if (req.method !== 'POST') {
+    if (req.method !== 'POST' && req.method !== 'GET' && req.method !== 'HEAD') {
         return new Response(JSON.stringify({ error: 'Method not allowed' }), {
             status: 405, headers: { ...corsHeaders, 'Content-Type': 'application/json' }
         });
+    }
+
+    // Ping/Verification support
+    if (req.method === 'GET' || req.method === 'HEAD') {
+        return new Response('ok', { status: 200, headers: corsHeaders });
     }
 
     try {
@@ -27,12 +32,11 @@ serve(async (req: Request) => {
         }
 
         // 0. Validate Secret (Security Check)
-        const signature = req.headers.get('x-abacatepay-signature');
-        if (webhookSecret && signature !== webhookSecret) {
-            console.error('Invalid webhook signature');
-            return new Response(JSON.stringify({ error: 'Unauthorized' }), {
-                status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-            });
+        const signature = req.headers.get('x-abacatepay-signature') || req.headers.get('x-webhook-signature');
+        const isSecretValid = !webhookSecret || signature === webhookSecret;
+
+        if (webhookSecret && !isSecretValid) {
+            console.warn(`[Webhook] Signature mismatch. Received: ${signature}`);
         }
 
         const supabase = createClient(supabaseUrl, supabaseServiceKey);
@@ -59,6 +63,13 @@ serve(async (req: Request) => {
 
         // 2. Handle Payment
         if (eventType === 'billing.paid') {
+            // Security check for real payment events
+            if (!isSecretValid) {
+                console.error('[Security] Blocking billing.paid due to invalid secret signature.');
+                return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+                    status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+                });
+            }
             const billingId = data.id;
 
             // Find transaction
