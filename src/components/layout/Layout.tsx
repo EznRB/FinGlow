@@ -1,6 +1,7 @@
 import React from 'react';
 import { Sidebar } from './Sidebar';
 import { BottomNav } from './BottomNav';
+import { MobileHeader } from './MobileHeader';
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -11,7 +12,8 @@ interface LayoutProps {
 
 export const Layout: React.FC<LayoutProps> = ({ children, credits, onLogout, onAddCredits }) => {
   return (
-    <div className="flex min-h-screen bg-slate-950 text-slate-50 font-sans">
+    <div className="flex min-h-screen bg-slate-950 text-slate-50 font-sans flex-col md:flex-row">
+      <MobileHeader />
       <Sidebar credits={credits} onLogout={onLogout} onAddCredits={onAddCredits} />
 
       <main className="flex-1 overflow-y-auto relative h-screen">
