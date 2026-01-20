@@ -81,6 +81,7 @@ serve(async (req: Request) => {
             returnUrl: finalSuccessUrl,
             completionUrl: finalSuccessUrl,
             customer: {
+                name: user.user_metadata?.full_name || user.user_metadata?.name || 'FinGlow User',
                 email: user.email,
             }
         };
@@ -95,13 +96,20 @@ serve(async (req: Request) => {
         });
 
         const abacateData = await abacateResponse.json();
+        const { url: checkoutUrl, id: billingId } = abacateData.data || {};
 
-        if (!abacateResponse.ok) {
+        if (!abacateResponse.ok || !checkoutUrl) {
+            const errorMsg = abacateData.message || abacateData.error || 'Failed to create billing';
             console.error('AbacatePay error:', abacateData);
-            throw new Error(abacateData.message || 'Failed to create billing');
+            return new Response(JSON.stringify({
+                success: false,
+                error: errorMsg,
+                details: abacateData
+            }), {
+                status: abacateResponse.status,
+                headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+            });
         }
-
-        const { url: checkoutUrl, id: billingId } = abacateData.data;
 
         // 4. Save Transaction
         const { data: transaction, error: txError } = await supabase

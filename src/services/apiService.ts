@@ -133,6 +133,9 @@ export async function redirectToCheckout(packageType: PackageType): Promise<void
   const response = await createCheckout(packageType);
 
   if (!response.success || !response.checkout_url) {
+    if ((response as any).details) {
+      console.error('AbacatePay detailed error:', (response as any).details);
+    }
     throw new Error(response.error || 'Failed to create checkout session');
   }
 

@@ -7,13 +7,14 @@ import { AnamnesisData } from '../../types';
 
 interface AnamnesisModalProps {
   isOpen: boolean;
-  onComplete: (data: AnamnesisData) => void;
+  onComplete: (data: AnamnesisData, savePersistent: boolean) => void;
   initialData?: AnamnesisData | null;
 }
 
 export const AnamnesisModal: React.FC<AnamnesisModalProps> = ({ isOpen, onComplete, initialData }) => {
   const { t } = useLanguage();
   const [step, setStep] = useState(1);
+  const [savePersistent, setSavePersistent] = useState(true);
   const [formData, setFormData] = useState<AnamnesisData>({
     age: 30,
     occupation: '',
@@ -37,7 +38,7 @@ export const AnamnesisModal: React.FC<AnamnesisModalProps> = ({ isOpen, onComple
     if (step < 3) {
       setStep(step + 1);
     } else {
-      onComplete(formData);
+      onComplete(formData, savePersistent);
     }
   };
 
@@ -89,7 +90,7 @@ export const AnamnesisModal: React.FC<AnamnesisModalProps> = ({ isOpen, onComple
                 initial={{ opacity: 0, y: -10 }}
                 animate={{ opacity: 1, y: 0 }}
                 className="mb-6 p-4 bg-emerald-500/10 border border-emerald-500/20 rounded-xl flex items-center justify-between group hover:bg-emerald-500/20 transition-all cursor-pointer"
-                onClick={() => onComplete(formData)}
+                onClick={() => onComplete(formData, false)}
               >
                 <div className="text-sm text-emerald-300">
                   <span className="block font-bold mb-1 flex items-center gap-1">
@@ -228,6 +229,26 @@ export const AnamnesisModal: React.FC<AnamnesisModalProps> = ({ isOpen, onComple
                       );
                     })}
                   </div>
+                </div>
+
+                <div className="mt-8 pt-6 border-t border-slate-800">
+                  <label className="flex items-center gap-3 cursor-pointer group">
+                    <div className="relative">
+                      <input
+                        type="checkbox"
+                        checked={savePersistent}
+                        onChange={(e) => setSavePersistent(e.target.checked)}
+                        className="sr-only"
+                      />
+                      <div className={`w-6 h-6 rounded-md border transition-all flex items-center justify-center ${savePersistent ? 'bg-emerald-500 border-emerald-500' : 'bg-slate-950 border-slate-700 group-hover:border-slate-500'
+                        }`}>
+                        {savePersistent && <CheckCircle2 className="w-4 h-4 text-white" />}
+                      </div>
+                    </div>
+                    <span className="text-sm text-slate-300 group-hover:text-white transition-colors">
+                      {t.anamnesis.saveForFuture || "Salvar informações para futuras análises"}
+                    </span>
+                  </label>
                 </div>
               </motion.div>
             )}

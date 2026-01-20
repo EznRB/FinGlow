@@ -17,7 +17,7 @@ interface UploadPageProps {
 
 export const UploadPage: React.FC<UploadPageProps> = ({ onLogout }) => {
   const { t } = useLanguage();
-  const { profile, refreshProfile } = useAuth();
+  const { profile, refreshProfile, updateAnamnesis } = useAuth();
 
   const [status, setStatus] = useState<AnalysisStatus>('idle');
   const [report, setReport] = useState<FinancialReportData | null>(null);
@@ -131,7 +131,7 @@ export const UploadPage: React.FC<UploadPageProps> = ({ onLogout }) => {
     }
   };
 
-  const handleAnamnesisComplete = async (profileData: AnamnesisData) => {
+  const handleAnamnesisComplete = async (profileData: AnamnesisData, savePersistent: boolean) => {
     setShowAnamnesis(false);
 
     if (!csvString) {
@@ -141,6 +141,12 @@ export const UploadPage: React.FC<UploadPageProps> = ({ onLogout }) => {
 
     try {
       setStatus('analyzing');
+
+      // Save to profile if requested
+      if (savePersistent) {
+        await updateAnamnesis(profileData);
+      }
+
       const analysisResult = await analyzeFinancesWithGemini(csvString, profileData);
 
       setReport(analysisResult);
@@ -176,7 +182,7 @@ export const UploadPage: React.FC<UploadPageProps> = ({ onLogout }) => {
       <AnamnesisModal
         isOpen={showAnamnesis}
         onComplete={handleAnamnesisComplete}
-        initialData={savedProfile}
+        initialData={profile?.anamnesis || savedProfile}
       />
 
       <div className="space-y-6">

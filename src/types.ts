@@ -3,6 +3,8 @@ export interface UserProfile {
   email: string;
   credits: number;
   name: string;
+  avatar_url?: string | null;
+  anamnesis?: AnamnesisData | null;
 }
 
 export interface AnamnesisData {

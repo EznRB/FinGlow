@@ -27,12 +27,15 @@ export const supabase: SupabaseClient = createClient(
 // Types
 // ============================================================================
 
+import { AnamnesisData } from '../types';
+
 export interface Profile {
   id: string;
   email: string;
   name: string | null;
   avatar_url: string | null;
   credits: number;
+  anamnesis: AnamnesisData | null;
   created_at: string;
   updated_at: string;
 }

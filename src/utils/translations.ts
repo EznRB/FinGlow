@@ -50,7 +50,9 @@ export const translations = {
       next: "Next Step",
       analyze: "Start AI Analysis",
       useSaved: "Skip & Use Saved Profile",
-      savedProfileFound: "We found a previously saved profile."
+      savedProfileFound: "We found a previously saved profile.",
+      saveForFuture: "Save information for future reviews",
+      saveNote: "Your data will be stored securely in your profile."
     },
     login: {
       tagline: 'AI Financial Auditor 2.0',
@@ -319,7 +321,9 @@ export const translations = {
       next: "Próximo Passo",
       analyze: "Iniciar Análise IA",
       useSaved: "Pular e Usar Perfil Salvo",
-      savedProfileFound: "Encontramos um perfil salvo anteriormente."
+      savedProfileFound: "Encontramos um perfil salvo anteriormente.",
+      saveForFuture: "Salvar informações para futuras análises",
+      saveNote: "Seus dados serão armazenados de forma segura no seu perfil."
     },
     login: {
       tagline: 'Auditoria Financeira com IA 2.0',

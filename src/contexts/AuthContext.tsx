@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react';
 import { User, Session, AuthError } from '@supabase/supabase-js';
+import { AnamnesisData } from '../types';
 import { supabase, Profile, getProfile } from '../services/supabaseClient';
 
 // ============================================================================
@@ -24,6 +25,7 @@ interface AuthContextType {
   // Profile methods
   refreshProfile: () => Promise<void>;
   updateProfile: (data: Partial<Profile>) => Promise<{ error: Error | null }>;
+  updateAnamnesis: (data: AnamnesisData) => Promise<{ error: Error | null }>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -269,6 +271,11 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     return { error: null };
   };
 
+  // Update anamnesis specifically
+  const updateAnamnesis = async (data: AnamnesisData) => {
+    return updateProfile({ anamnesis: data });
+  };
+
   const value: AuthContextType = {
     user,
     session,
@@ -283,6 +290,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     updatePassword,
     refreshProfile,
     updateProfile,
+    updateAnamnesis,
   };
 
   return (
