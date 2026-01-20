@@ -35,6 +35,14 @@ export const Login: React.FC = () => {
     setSuccessMessage(null);
 
     try {
+      // Basic email validation
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(email)) {
+        setErrorMessage('Por favor, insira um formato de e-mail válido.');
+        setIsLoading(false);
+        return;
+      }
+
       if (showForgotPassword) {
         // Reset password flow
         const { error } = await resetPassword(email);
