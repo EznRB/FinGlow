@@ -20,9 +20,19 @@ serve(async (req: Request) => {
     try {
         const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
         const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+        const webhookSecret = Deno.env.get('ABACATEPAY_WEBHOOK_SECRET');
 
         if (!supabaseUrl || !supabaseServiceKey) {
             throw new Error('Missing environment variables');
+        }
+
+        // 0. Validate Secret (Security Check)
+        const signature = req.headers.get('x-abacatepay-signature');
+        if (webhookSecret && signature !== webhookSecret) {
+            console.error('Invalid webhook signature');
+            return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+                status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+            });
         }
 
         const supabase = createClient(supabaseUrl, supabaseServiceKey);
