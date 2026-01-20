@@ -40,9 +40,9 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const [error, setError] = useState<AuthError | null>(null);
 
   // Fetch or create user profile
-  const fetchProfile = useCallback(async (user: User) => {
+  const fetchProfile = useCallback(async (userId: string, email?: string, name?: string, avatarUrl?: string | null) => {
     try {
-      let profileData = await getProfile(user.id);
+      let profileData = await getProfile(userId);
 
       // If no profile exists (common for Google signups), create one
       if (!profileData) {
@@ -50,10 +50,10 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         const { data: newProfile, error } = await supabase
           .from('profiles')
           .insert({
-            id: user.id,
-            email: user.email,
-            name: user.user_metadata?.full_name || user.user_metadata?.name || 'User',
-            avatar_url: user.user_metadata?.avatar_url || null,
+            id: userId,
+            email: email,
+            name: name || 'User',
+            avatar_url: avatarUrl || null,
             credits: 1 // Gift 1 credit for new signups
           })
           .select()
@@ -74,10 +74,11 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   // Refresh profile data
   const refreshProfile = useCallback(async () => {
-    if (user?.id) {
-      await fetchProfile(user.id);
+    const { data: { user: currentUser } } = await supabase.auth.getUser();
+    if (currentUser?.id) {
+      await fetchProfile(currentUser.id);
     }
-  }, [user?.id, fetchProfile]);
+  }, [fetchProfile]);
 
   // Initialize auth state on mount
   useEffect(() => {
@@ -122,8 +123,14 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         setUser(newSession?.user ?? null);
 
         if (newSession?.user) {
-          // Small delay to allow trigger to create profile
-          setTimeout(() => fetchProfile(newSession.user.id), 500);
+          // Pass metadata for automatic profile creation if needed
+          const meta = newSession.user.user_metadata;
+          fetchProfile(
+            newSession.user.id,
+            newSession.user.email,
+            meta?.full_name || meta?.name,
+            meta?.avatar_url
+          );
         } else {
           setProfile(null);
         }
